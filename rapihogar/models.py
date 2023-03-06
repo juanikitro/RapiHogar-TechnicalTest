@@ -67,16 +67,27 @@ class Technician(models.Model):
     last_name = models.CharField(max_length=100, default='-', blank=True, null=True)
 
     company = models.ForeignKey(
-        Company,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True
-    )
+            Company,
+            on_delete=models.CASCADE,
+            null=True,
+            blank=True
+        )
 
     @property
     def full_name(self):
         return u"{} {}".format(self.first_name if self.first_name else '',
                                self.last_name if self.last_name else '')
+
+    def pay_by_hours(hours_worked):
+        rates = {14: 200, 29: 250, 48: 300, float('inf'): 350}
+        discounts = {14: 0.15, 29: 0.16, 48: 0.17, float('inf'): 0.18}
+
+        for threshold, rate in rates.items():
+            if hours_worked < threshold:
+                discount = discounts[threshold]
+                break
+
+        return int(hours_worked * rate * (1 - discount))
 
     class Meta:
         app_label = 'rapihogar'
