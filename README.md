@@ -3,7 +3,6 @@
 
 ## Instalar Docker
 
-* Mac y Windows: [Docker Desktop](https://www.docker.com/products/docker-desktop)
 * Ubuntu: [ Docker ](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-20-04-es) & [Docker Compose](https://docs.docker.com/compose/install/)
 
 
@@ -12,7 +11,7 @@
 * Verificar puertos
 * Docker run
 * Inicializar la base de datos 
-* How to run tests
+* Correr tests
 
 ### Revisar si el puerto 80 esta ocupado. 
 
@@ -20,42 +19,39 @@ Debian:
 ```bash
 netstat -tulpn | grep 80
 ```
-Mac:
-```bash
-sudo lsof -i :80
-```
+
+### Correr los servicios en docker-compose
+
 ```bash
 docker-compose build
 docker-compose up
-docker-compose ps
-
-    Name                  Command               State                    Ports                  
-------------------------------------------------------------------------------------------------
-test_nginx_1   /docker-entrypoint.sh ngin ...   Up      0.0.0.0:80->80/tcp,:::80->80/tcp        
-test_web_1     python manage.py runserver ...   Up      0.0.0.0:8000->8000/tcp,:::8000->8000/tcp
 ```
 
 ```bash
-docker exec test_web_1  python manage.py  makemigrations rapihogar
-docker exec test_web_1  python manage.py  migrate
+docker exec rapihogar-test-09a445513d83_nginx_1  python manage.py  makemigrations rapihogar
+docker exec rapihogar-test-09a445513d83_nginx_1  python manage.py  migrate
 ```
+
 ### Datos de prubas 
+
 ```bash
-python manage.py loaddata rapihogar/fixtures/user.json --app rapihogar.user
-python manage.py loaddata rapihogar/fixtures/company.json --app rapihogar.company
-python manage.py loaddata rapihogar/fixtures/scheme.json --app rapihogar.scheme
-python manage.py loaddata rapihogar/fixtures/pedido.json --app rapihogar.pedido
+docker exec rapihogar-test-09a445513d83_nginx_1 python manage.py loaddata rapihogar/fixtures/user.json --app rapihogar.user
+docker exec rapihogar-test-09a445513d83_nginx_1 python manage.py loaddata rapihogar/fixtures/company.json --app rapihogar.company
+docker exec rapihogar-test-09a445513d83_nginx_1 python manage.py loaddata rapihogar/fixtures/scheme.json --app rapihogar.scheme
+docker exec rapihogar-test-09a445513d83_nginx_1 python manage.py loaddata rapihogar/fixtures/pedido.json --app rapihogar.pedido
+
+# Modelo nuevo Tecnico:
+docker exec rapihogar-test-09a445513d83_nginx_1 python manage.py loaddata rapihogar/fixtures/technician.json --app rapihogar.technician
 ```
-or 
-```bash
-docker exec -it test_web_1 python manage.py createsuperuser
-```
+
 ### Run test ###
 
 ```bash
-docker exec -it test_web_1 python manage.py test
+docker exec rapihogar-test-09a445513d83_nginx_1 python manage.py test
 ```
+
 # Tarea a realizar #
+
 Rapihogar, necesita cargar las horas trabajadas por los técnicos  para poder realizar la liquidación. Se pide:
 
 ### 1. ###
