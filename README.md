@@ -43,7 +43,7 @@ docker exec test_web_1  python manage.py  migrate
 ```bash
 python manage.py loaddata rapihogar/fixtures/user.json --app rapihogar.user
 python manage.py loaddata rapihogar/fixtures/company.json --app rapihogar.company
-python manage.py loaddata rapihogar/fixtures/user.scheme --app rapihogar.scheme
+python manage.py loaddata rapihogar/fixtures/scheme.json --app rapihogar.scheme
 python manage.py loaddata rapihogar/fixtures/pedido.json --app rapihogar.pedido
 ```
 or 
