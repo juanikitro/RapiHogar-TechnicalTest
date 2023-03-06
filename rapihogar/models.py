@@ -107,7 +107,6 @@ class Pedido(models.Model):
         Technician,
         verbose_name='técnico',
         on_delete=models.PROTECT)
-
     scheme = models.ForeignKey(
         Scheme,
         null=True,
