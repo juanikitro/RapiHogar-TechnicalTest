@@ -89,3 +89,27 @@ class Pedido(models.Model):
         app_label = 'rapihogar'
         verbose_name_plural = 'pedidos'
         ordering = ('-id', )
+
+
+class Technician(models.Model):
+    email = models.EmailField(unique=True)
+    first_name = models.CharField(max_length=100, default='-', blank=True, null=True)
+    last_name = models.CharField(max_length=100, default='-', blank=True, null=True)
+
+    company = models.ForeignKey(
+        Company,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
+
+    @property
+    def full_name(self):
+        return u"{} {}".format(self.first_name if self.first_name else '',
+                               self.last_name if self.last_name else '')
+
+    class Meta:
+        app_label = 'rapihogar'
+        verbose_name = _('Técnico')
+        verbose_name_plural = _('Técnicos')
+        ordering = ('-id', )
