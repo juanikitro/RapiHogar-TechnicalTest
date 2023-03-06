@@ -2,6 +2,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, UserManager
 
+
 class User(AbstractBaseUser, PermissionsMixin):    
     email = models.EmailField(_('email address'), unique=True)
     username = models.CharField(max_length=765, blank=True)
@@ -59,37 +60,6 @@ class Company(models.Model):
         verbose_name = _('Empresa')
         verbose_name_plural = _('Empresas')
 
-class Pedido(models.Model):
-    
-    SOLICITUD = 0
-    PEDIDO = 1
-
-    TIPO_PEDIDO = (
-        (SOLICITUD, 'Solicitud'),
-        (PEDIDO, 'Pedido'),
-    )
-    type_request = models.IntegerField(
-        choices=TIPO_PEDIDO,
-        db_index=True,
-        default=PEDIDO
-    )
-    client = models.ForeignKey(
-        User,
-        verbose_name='cliente',
-        on_delete=models.CASCADE
-    )
-    scheme = models.ForeignKey(
-        Scheme,
-        null=True,
-        on_delete=models.CASCADE
-    )
-    hours_worked = models.IntegerField(default=0)
-
-    class Meta:
-        app_label = 'rapihogar'
-        verbose_name_plural = 'pedidos'
-        ordering = ('-id', )
-
 
 class Technician(models.Model):
     email = models.EmailField(unique=True)
@@ -112,4 +82,40 @@ class Technician(models.Model):
         app_label = 'rapihogar'
         verbose_name = _('Técnico')
         verbose_name_plural = _('Técnicos')
+        ordering = ('-id', )
+
+
+class Pedido(models.Model):
+    SOLICITUD = 0
+    PEDIDO = 1
+
+    TIPO_PEDIDO = (
+        (SOLICITUD, 'Solicitud'),
+        (PEDIDO, 'Pedido'),
+    )
+    type_request = models.IntegerField(
+        choices=TIPO_PEDIDO,
+        db_index=True,
+        default=PEDIDO
+    )
+    client = models.ForeignKey(
+        User,
+        verbose_name='cliente',
+        on_delete=models.CASCADE
+    )
+    technician = models.ForeignKey(
+        Technician,
+        verbose_name='técnico',
+        on_delete=models.PROTECT)
+
+    scheme = models.ForeignKey(
+        Scheme,
+        null=True,
+        on_delete=models.CASCADE
+    )
+    hours_worked = models.IntegerField(default=0)
+
+    class Meta:
+        app_label = 'rapihogar'
+        verbose_name_plural = 'pedidos'
         ordering = ('-id', )
