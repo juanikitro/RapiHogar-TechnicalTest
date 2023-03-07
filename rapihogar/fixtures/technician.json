@@ -48,5 +48,55 @@
         "company": 1,
         "email": "lionel10@messi.com"
     }
+},
+{
+    "model": "rapihogar.technician",
+    "pk": 6,
+    "fields": {
+        "first_name": "Stephany",
+        "last_name": "Gonzalez",
+        "company": 1,
+        "email": "sgonzalez@mailamericas.com"
+    }
+}, 
+{
+    "model": "rapihogar.technician",
+    "pk": 7,
+    "fields": {
+        "first_name": "Alfredo",
+        "last_name": "Leuco",
+        "company": 1,
+        "email": "aleuco@gmail.com"
+    }
+},
+{
+    "model": "rapihogar.technician",
+    "pk": 8,
+    "fields": {
+        "first_name": "Luciano",
+        "last_name": "Mellera",
+        "company": 1,
+        "email": "lmellera@gmail.com"
+    }
+},
+{
+    "model": "rapihogar.technician",
+    "pk": 9,
+    "fields": {
+        "first_name": "Pepe",
+        "last_name": "Argento",
+        "company": 1,
+        "email": "pepe@outlook.com"
+    }
+},
+{
+    "model": "rapihogar.technician",
+    "pk": 10,
+    "fields": {
+        "first_name": "Juan",
+        "last_name": "De Ejemplos",
+        "company": 1,
+        "email": "ggrgut@gmail.com"
+    }
 }
 ]

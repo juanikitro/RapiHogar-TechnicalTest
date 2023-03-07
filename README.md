@@ -1,106 +1,579 @@
-# README #
+# Solucion
+Hola! Soy Juan Ignacio y esta es mi solucion. Sinceramente no creo que sea la mejor solucion que puedo encontrar ya que tuve que hacerla en un tiempo muy reducido por trabajo y compromisos personales.
+Las vistas de los endpoints estan basadas en funciones ya que me parecio la forma mas rapida de programarlo.
+La informacion del modelo "Technician" la invente ya que no venia aclarado y quise que sea lo mas "practico y realista" posible considerando la prueba.
+Me hubiese gustado tener mas tiempo para entregar la prueba y poder agregar algunos test cases que me quedaron afuera, documentar mejor el codigo y pasar la DB a un Postgre como lo tienen en RapiHogar.
 
-
-## Instalar Docker
-
-* Ubuntu: [ Docker ](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-20-04-es) & [Docker Compose](https://docs.docker.com/compose/install/)
-
-
-## Run
-* Clonar repository
-* Verificar puertos
-* Docker run
-* Inicializar la base de datos 
-* Correr tests
-
-### Revisar si el puerto 80 esta ocupado. 
-
-Debian:
+### Recomiendo correr los tests para ver si todo esta funcionando bien:
 ```bash
-netstat -tulpn | grep 80
+python manage.py test
 ```
 
-### Correr los servicios en docker-compose
+## 1. Creacion del modelo y carga de datos
 
+Modelo:
+```python
+class Technician(models.Model):
+    email = models.EmailField(unique=True)
+    first_name = models.CharField(max_length=100, default='-') # Default for avoid future problems
+    last_name = models.CharField(max_length=100, default='-') # Default for avoid future problems
+    company = models.ForeignKey(
+            Company,
+            on_delete=models.SET_NULL,
+            null=True,
+            blank=True
+        ) # on_delete = set null to avoid problems with delete companies and don't loose data
+
+    @staticmethod
+    def pay_by_hours(hours_worked):
+        # Table of rates and discounts:
+        rates = {14: 200, 29: 250, 48: 300, float('inf'): 350}
+        discounts = {14: 0.15, 29: 0.16, 48: 0.17, float('inf'): 0.18}
+
+        for threshold, rate in rates.items():
+            if hours_worked < threshold:
+                discount = discounts[threshold]
+                break
+
+        return int(hours_worked * rate * (1 - discount))
+
+    class Meta:
+        app_label = 'rapihogar'
+        verbose_name = _('Técnico')
+        verbose_name_plural = _('Técnicos')
+        ordering = ('id', )
+```
+
+Cargar datos:
 ```bash
-docker-compose build
-docker-compose up
+python manage.py loaddata rapihogar/fixtures/technician.json --app rapihogar.technician
 ```
 
+## 2. Comando para generar N pedidos
+
+### Con N entre 1 y 100
+Ejecucion:
 ```bash
-docker exec rapihogar-test-09a445513d83_nginx_1  python manage.py  makemigrations rapihogar
-docker exec rapihogar-test-09a445513d83_nginx_1  python manage.py  migrate
-```
+N=10 # ejemplo con variable de bash
+python manage.py create_random_pedidos $N
+    ```
 
-### Datos de prubas 
-
+Output:
 ```bash
-docker exec rapihogar-test-09a445513d83_nginx_1 python manage.py loaddata rapihogar/fixtures/user.json --app rapihogar.user
-docker exec rapihogar-test-09a445513d83_nginx_1 python manage.py loaddata rapihogar/fixtures/company.json --app rapihogar.company
-docker exec rapihogar-test-09a445513d83_nginx_1 python manage.py loaddata rapihogar/fixtures/scheme.json --app rapihogar.scheme
-docker exec rapihogar-test-09a445513d83_nginx_1 python manage.py loaddata rapihogar/fixtures/pedido.json --app rapihogar.pedido
-
-# Modelo nuevo Tecnico:
-docker exec rapihogar-test-09a445513d83_nginx_1 python manage.py loaddata rapihogar/fixtures/technician.json --app rapihogar.technician
+Pedido 1 de 10 creado con id: 63
+Pedido 2 de 10 creado con id: 64
+Pedido 3 de 10 creado con id: 65
+Pedido 4 de 10 creado con id: 66
+Pedido 5 de 10 creado con id: 67
+Pedido 6 de 10 creado con id: 68
+Pedido 7 de 10 creado con id: 69
+Pedido 8 de 10 creado con id: 70
+Pedido 9 de 10 creado con id: 71
+Pedido 10 de 10 creado con id: 72
+Se han creado 10 pedidos aleatorios
 ```
 
-### Run test ###
-
+### Con N < 1 && N > 100
+Ejecucion:
 ```bash
-docker exec rapihogar-test-09a445513d83_nginx_1 python manage.py test
+N=200 # ejemplo con variable de bash
+python manage.py create_random_pedidos $N
+    ```
+
+Output:
+```bash
+N debe estar entre 1 y 100
 ```
 
-# Tarea a realizar #
+## 3. Servicio web para listar tecnicos y el pago correspondiente
 
-Rapihogar, necesita cargar las horas trabajadas por los técnicos  para poder realizar la liquidación. Se pide:
-
-### 1. ###
-Crear el modelo para cargar técnicos y crear al menos 5 técnicos
-
-### 2. ###
-Realizar un Comando que genere N pedidos  (N, será el número de pedidos a cargar, que se deberá ingresar)
-
-* N sólo puede contener valores entre 1 (inclusive) y 100 (inclusive).
-* Seleccionar un Técnico aleatoriamente
-* Seleccionar un Cliente  aleatoriamente
-* Asigne horas trabajadas entre 1 y 10
-
-### 3. ###
-Luego de cargar todos los datos crear un servicio web que liste todos los técnicos y calcule el pago según las horas trabajadas 
-
-Cálculo de Pago según la siguiente tabla:
-
-| Cantidad De Horas | Valor Hora  | Porcentaje de descuento  |
-| --------   | -------- | -------- |
-|  0-14 | 200 | 15% |
-| 15-28 | 250 | 16% |
-| 29-47 | 300 | 17% |
-|  >48 | 350 | 18% |
-
-	
-	Por ejemplo: Trabajador “Larusso Daniel”, Horas trabajadas = 20
-		total = (20 * 250) – (20 * 250 * 0.16)
-		total = (5.000) – (800)
-		total = 4.200
-		
-Luego realizar un servicio que muestre un listado completo de técnicos, que debería ser algo así:
-
-* Nombre completo 
-* Horas Trabajadas idad de pedidos en los que trabajo 
-* Total a Cobrar
-* Cant
-
+### Consulta GET sin filtrar
+Consulta en cURL:
+```bash
+curl --location 'http://localhost:8000/api/technicians/'
 ```
- El listado se debe poder filtrar por parte del nombre 
+Output:
+```bash
+[
+    {
+        "id": 1,
+        "full_name": "Juan Ignacio Portilla Kitroser",
+        "orders_id": [
+            257,
+            248,
+            219,
+            206,
+            179,
+            172,
+            167,
+            164,
+            137,
+            117,
+            116,
+            110,
+            107,
+            103,
+            99,
+            97,
+            94,
+            92,
+            90,
+            55,
+            44,
+            35,
+            34,
+            33,
+            27,
+            17,
+            12,
+            10,
+            9,
+            6,
+            2,
+            1
+        ],
+        "hours_worked": 159,
+        "pay_by_hours": 45633
+    },
+    {
+        "id": 2,
+        "full_name": "Lautaro Martinez",
+        "orders_id": [
+            277,
+            266,
+            265,
+            255,
+            246,
+            232,
+            227,
+            216,
+            213,
+            211,
+            199,
+            182,
+            173,
+            169,
+            168,
+            163,
+            158,
+            151,
+            143,
+            127,
+            98,
+            70,
+            66,
+            65,
+            57,
+            52,
+            51,
+            48,
+            45,
+            43,
+            40,
+            36,
+            31,
+            26,
+            25,
+            24,
+            14,
+            8
+        ],
+        "hours_worked": 236,
+        "pay_by_hours": 67732
+    },
+    {
+        "id": 3,
+        "full_name": "Nicolas De Tracy",
+        "orders_id": [
+            276,
+            272,
+            264,
+            262,
+            251,
+            249,
+            247,
+            235,
+            234,
+            224,
+            195,
+            186,
+            185,
+            175,
+            170,
+            165,
+            152,
+            150,
+            148,
+            146,
+            134,
+            106,
+            105,
+            87,
+            83,
+            81,
+            77,
+            73,
+            61,
+            59,
+            49,
+            46,
+            38,
+            21,
+            19,
+            16,
+            7,
+            5,
+            4,
+            3
+        ],
+        "hours_worked": 211,
+        "pay_by_hours": 60557
+    },
+    {
+        "id": 4,
+        "full_name": "Javier Cuenca",
+        "orders_id": [
+            278,
+            260,
+            259,
+            217,
+            207,
+            202,
+            180,
+            154,
+            149,
+            130,
+            123,
+            109,
+            101,
+            88,
+            72,
+            62,
+            60,
+            58,
+            54,
+            50,
+            47,
+            41,
+            39,
+            30,
+            29,
+            15,
+            13,
+            11
+        ],
+        "hours_worked": 166,
+        "pay_by_hours": 47642
+    },
+    {
+        "id": 5,
+        "full_name": "Lionel Andres Messi",
+        "orders_id": [
+            275,
+            273,
+            252,
+            239,
+            237,
+            231,
+            222,
+            214,
+            204,
+            188,
+            178,
+            174,
+            160,
+            159,
+            144,
+            142,
+            138,
+            133,
+            128,
+            85,
+            79,
+            78,
+            74,
+            56,
+            53,
+            42,
+            37,
+            32,
+            28,
+            23,
+            22,
+            20,
+            18
+        ],
+        "hours_worked": 163,
+        "pay_by_hours": 46781
+    },
+    {
+        "id": 6,
+        "full_name": "Stephany Gonzalez",
+        "orders_id": [
+            267,
+            253,
+            243,
+            238,
+            233,
+            223,
+            218,
+            208,
+            190,
+            177,
+            176,
+            162,
+            135,
+            124,
+            118,
+            115,
+            112,
+            93,
+            80,
+            71
+        ],
+        "hours_worked": 102,
+        "pay_by_hours": 29274
+    },
+    {
+        "id": 7,
+        "full_name": "Alfredo Leuco",
+        "orders_id": [
+            274,
+            271,
+            270,
+            258,
+            250,
+            225,
+            220,
+            200,
+            196,
+            192,
+            191,
+            171,
+            161,
+            156,
+            153,
+            147,
+            141,
+            140,
+            139,
+            96,
+            86,
+            84,
+            67,
+            63
+        ],
+        "hours_worked": 127,
+        "pay_by_hours": 36449
+    },
+    {
+        "id": 8,
+        "full_name": "Luciano Mellera",
+        "orders_id": [
+            261,
+            254,
+            242,
+            215,
+            210,
+            205,
+            189,
+            166,
+            157,
+            91,
+            82,
+            69,
+            68
+        ],
+        "hours_worked": 59,
+        "pay_by_hours": 16933
+    },
+    {
+        "id": 9,
+        "full_name": "Pepe Argento",
+        "orders_id": [
+            269,
+            263,
+            245,
+            240,
+            236,
+            221,
+            212,
+            203,
+            198,
+            194,
+            187,
+            181,
+            155,
+            136,
+            126,
+            125,
+            122,
+            114,
+            102,
+            89,
+            75,
+            64
+        ],
+        "hours_worked": 112,
+        "pay_by_hours": 32144
+    },
+    {
+        "id": 10,
+        "full_name": "Juan De Ejemplos",
+        "orders_id": [
+            268,
+            256,
+            244,
+            241,
+            230,
+            229,
+            228,
+            226,
+            209,
+            201,
+            197,
+            193,
+            184,
+            183,
+            145,
+            132,
+            131,
+            129,
+            121,
+            120,
+            119,
+            113,
+            111,
+            108,
+            104,
+            100,
+            95,
+            76
+        ],
+        "hours_worked": 143,
+        "pay_by_hours": 41041
+    }
+]
 ```
-### 4. ###
-Luego realizar un servicio que muestre un informe que contenga:
 
-* mostrar el monto promedio cobrado por todos los técnicos.
-* mostrar los datos de todos los técnicos que cobraron menos que el promedio.
-* El último trabajador ingresado que cobró el monto más bajo.
-* El último trabajador ingresado que cobró el monto más alto.
+### Consulta GET filtrando por name=juan
+Consulta en cURL:
+```bash
+curl --location 'http://localhost:8000/api/technicians/?name=juan'
+```
+Output:
+```bash
+[
+    {
+        "id": 1,
+        "full_name": "Juan Ignacio Portilla Kitroser",
+        "orders_id": [
+            257,
+            248,
+            219,
+            206,
+            179,
+            172,
+            167,
+            164,
+            137,
+            117,
+            116,
+            110,
+            107,
+            103,
+            99,
+            97,
+            94,
+            92,
+            90,
+            55,
+            44,
+            35,
+            34,
+            33,
+            27,
+            17,
+            12,
+            10,
+            9,
+            6,
+            2,
+            1
+        ],
+        "hours_worked": 159,
+        "pay_by_hours": 45633
+    },
+    {
+        "id": 10,
+        "full_name": "Juan De Ejemplos",
+        "orders_id": [
+            268,
+            256,
+            244,
+            241,
+            230,
+            229,
+            228,
+            226,
+            209,
+            201,
+            197,
+            193,
+            184,
+            183,
+            145,
+            132,
+            131,
+            129,
+            121,
+            120,
+            119,
+            113,
+            111,
+            108,
+            104,
+            100,
+            95,
+            76
+        ],
+        "hours_worked": 143,
+        "pay_by_hours": 41041
+    }
+]
+```
 
-### Nota. ### 
+### Consulta POST (invalida)
+Consulta en cURL:
+```bash
+curl --location --request POST 'http://localhost:8000/api/technicians/'
+```
 
-Para la implementación de las API's utilizar solo las clases necesarias, no exponer metodos publicos que no se necesitan.
+Output:
+```bash
+{
+    "detail": "Method \"POST\" not allowed."
+}
+```
+
+## 4. Servicio web para crear reporte
+
+Consulta en cURL:
+```bash
+curl --location 'http://localhost:8000/api/report/'
+```
+Output:
+```bash
+{
+    "average_amount": 25126.0,
+    "below_average_technicians": {
+        "Stephany Gonzalez": 17340,
+        "Alfredo Leuco": 21590,
+        "Luciano Mellera": 10030,
+        "Pepe Argento": 19040,
+        "Juan De Ejemplos": 24310
+    },
+    "with_higher_amount": "Lautaro Martinez",
+    "with_lower_amount": "Luciano Mellera"
+}
+```

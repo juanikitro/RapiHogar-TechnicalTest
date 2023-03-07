@@ -63,22 +63,18 @@ class Company(models.Model):
 
 class Technician(models.Model):
     email = models.EmailField(unique=True)
-    first_name = models.CharField(max_length=100, default='-', blank=True, null=True)
-    last_name = models.CharField(max_length=100, default='-', blank=True, null=True)
-
+    first_name = models.CharField(max_length=100, default='-') # Default for avoid future problems
+    last_name = models.CharField(max_length=100, default='-') # Default for avoid future problems
     company = models.ForeignKey(
             Company,
-            on_delete=models.CASCADE,
+            on_delete=models.SET_NULL,
             null=True,
             blank=True
-        )
+        ) # on_delete = set null to avoid problems with delete companies and don't loose data
 
-    @property
-    def full_name(self):
-        return u"{} {}".format(self.first_name if self.first_name else '',
-                               self.last_name if self.last_name else '')
-
+    @staticmethod
     def pay_by_hours(hours_worked):
+        # Table of rates and discounts:
         rates = {14: 200, 29: 250, 48: 300, float('inf'): 350}
         discounts = {14: 0.15, 29: 0.16, 48: 0.17, float('inf'): 0.18}
 
@@ -93,7 +89,7 @@ class Technician(models.Model):
         app_label = 'rapihogar'
         verbose_name = _('Técnico')
         verbose_name_plural = _('Técnicos')
-        ordering = ('-id', )
+        ordering = ('id', )
 
 
 class Pedido(models.Model):

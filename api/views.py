@@ -40,11 +40,27 @@ def technician_list(request):
     return JsonResponse(queryset, safe=False)
 
 
-# def get_report(request):
-#     response = {
-#         monto_promedio: 0,
-#         tecnicos_debajo_del_promedio: [],
-#         ultimo_mas_bajo: [],
-#         ultimo_mas_alto: [],
-#     }
-#     Technician.objects.all()
+@api_view(['GET']) # El "request" como argumento porque si no no funciona como vista
+def get_report(request):
+    technicians = Technician.objects.all()
+    technician_with_payments = {}
+    all_technicians_pay = 0
+
+    for t in technicians:
+        orders_hours = list(Pedido.objects.filter(technician=t.id).values("hours_worked"))
+        technician_sum = 0
+        
+        for i in orders_hours:
+            all_technicians_pay += Technician.pay_by_hours(i["hours_worked"])
+            technician_sum += Technician.pay_by_hours(i["hours_worked"])
+        technician_with_payments[f"{t.first_name} {t.last_name}"] = technician_sum      
+    
+
+    response = {
+        "average_amount": all_technicians_pay / technicians.count() if technicians.count() != 0 else 0,
+        "below_average_technicians": {k:v for (k,v) in technician_with_payments.items() if v < (all_technicians_pay / technicians.count() if technicians.count() != 0 else 0)}, 
+        "with_higher_amount": max(technician_with_payments.items(), key=lambda x: x[1])[0] if technician_with_payments else None,
+        "with_lower_amount": min(technician_with_payments.items(), key=lambda x: x[1])[0] if technician_with_payments else None
+    }
+
+    return JsonResponse(response, safe=False)
